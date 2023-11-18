@@ -13,7 +13,7 @@ DEBUG = os.getenv('DEBUG').lower() == 'true'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split()
 
-CSRF_TRUSTED_ORIGINS = ['https://elijah-yap.sytes.net',]
+CSRF_TRUSTED_ORIGINS = ['https://elijah-yap.sytes.net']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
