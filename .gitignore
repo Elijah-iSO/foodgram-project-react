@@ -130,3 +130,8 @@ dmypy.json
 
 # .idea
 .idea
+
+# лишний вес
+media/
+static/
+frontend/
