@@ -1,8 +1,8 @@
 from django.core.validators import MinValueValidator
 from django.db import models
-from foodgram.settings import RECIPES_MAX_LENGTH
-from users.models import User
 
+from users.models import User
+from .constants import RECIPES_MAX_LENGTH
 from .validators import create_hex_validator, create_slug_validator
 
 
@@ -49,6 +49,12 @@ class Ingredient(models.Model):
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
         ordering = ('name',)
+        constraints = [
+            models.UniqueConstraint(
+                fields=['name', 'measurement_unit'],
+                name='unique_ingr'
+            )
+        ]
 
     def __str__(self):
         return f'{self.name}, {self.measurement_unit}'
@@ -153,6 +159,9 @@ class ShoppingCart(models.Model):
                 name='unique_shopping_cart'
             )
         ]
+
+    def __str__(self):
+        return f'{self.user} добавил рецепт {self.recipe} в Корзину'
 
 
 class Favorite(models.Model):

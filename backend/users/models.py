@@ -1,14 +1,14 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from foodgram.settings import USERS_MAX_LENGTH
 
+from .constants import EMAIL_MAX_LENGTH, USERS_MAX_LENGTH
 from .validators import create_username_validator
 
 
 class User(AbstractUser):
     email = models.EmailField(
         unique=True,
-        max_length=254
+        max_length=EMAIL_MAX_LENGTH,
     )
     username = models.CharField(
         max_length=USERS_MAX_LENGTH,
@@ -26,7 +26,7 @@ class User(AbstractUser):
         null=True
     )
     password = models.CharField(
-        max_length=USERS_MAX_LENGTH
+        max_length=USERS_MAX_LENGTH,
     )
 
     USERNAME_FIELD = 'email'

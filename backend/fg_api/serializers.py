@@ -1,12 +1,13 @@
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
+
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
+from rest_framework import serializers
+
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Tag)
-from rest_framework import serializers
 from users.models import User
-
 from .utils import create_recipe_ingredient, get_subscribed
 from .validators import validate_new_username
 
@@ -16,8 +17,8 @@ class UserGetSerializer(UserSerializer):
 
     class Meta:
         model = User
-        fields = ['email', 'id', 'username', 'first_name', 'last_name',
-                  'is_subscribed']
+        fields = ('email', 'id', 'username', 'first_name', 'last_name',
+                  'is_subscribed')
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
@@ -32,8 +33,8 @@ class UserPostSerializer(UserCreateSerializer):
 
     class Meta:
         model = User
-        fields = ['email', 'id', 'username', 'first_name', 'last_name',
-                  'password']
+        fields = ('email', 'id', 'username', 'first_name', 'last_name',
+                  'password')
 
     def validate_username(self, username):
         return validate_new_username(username)
@@ -56,7 +57,7 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['current_password', 'new_password']
+        fields = ('current_password', 'new_password')
 
     def update(self, instance, validated_data):
         if not instance.check_password(validated_data['current_password']):
@@ -92,9 +93,9 @@ class FollowSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['email', 'id', 'username', 'first_name',
+        fields = ('email', 'id', 'username', 'first_name',
                   'last_name', 'is_subscribed',
-                  'recipes', 'recipes_count']
+                  'recipes', 'recipes_count')
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
@@ -107,15 +108,15 @@ class FollowSerializer(serializers.ModelSerializer):
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
-        fields = ['id', 'name', 'color', 'slug']
-        read_only_fields = ['id', 'name', 'color', 'slug']
+        fields = ('id', 'name', 'color', 'slug')
+        read_only_fields = ('id', 'name', 'color', 'slug')
 
 
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient()
-        fields = ['id', 'name', 'measurement_unit']
-        read_only_fields = ['id', 'name', 'measurement_unit']
+        fields = ('id', 'name', 'measurement_unit')
+        read_only_fields = ('id', 'name', 'measurement_unit')
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
@@ -128,7 +129,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RecipeIngredient
-        fields = ['id', 'name', 'measurement_unit', 'amount']
+        fields = ('id', 'name', 'measurement_unit', 'amount')
 
     def validate_amount(self, value):
         if value <= 0:
@@ -151,9 +152,9 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = ['id', 'tags', 'author', 'ingredients', 'is_favorited',
+        fields = ('id', 'tags', 'author', 'ingredients', 'is_favorited',
                   'is_in_shopping_cart', 'name', 'image',
-                  'text', 'cooking_time']
+                  'text', 'cooking_time')
 
     def get_is_favorited(self, obj):
         request = self.context.get('request')
@@ -197,15 +198,15 @@ class RecipePostUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = ['id', 'ingredients', 'tags', 'author',
-                  'name', 'image', 'text', 'cooking_time']
+        fields = ('id', 'ingredients', 'tags', 'author',
+                  'name', 'image', 'text', 'cooking_time')
 
     def validate(self, data):
         ingredients_list = []
         ingredients_data = data.get('ingredients')
         cooking_time = data.get('cooking_time')
         tags = data.get('tags')
-        for ingredient in data.get('ingredients'):
+        for ingredient in ingredients_data:
             if ingredient.get('amount') <= 0:
                 raise ValidationError(
                     'Количество ингредиента не может быть меньше 1'
@@ -216,7 +217,7 @@ class RecipePostUpdateSerializer(serializers.ModelSerializer):
                 'В рецепт нельзя добавить одинаковые ингредиенты!'
                 'Следует увеличить количество текущего ингредиента!'
             )
-        if not ingredients_data or len(ingredients_data) < 1:
+        if not ingredients_data:
             raise ValidationError(
                 "Рецепт должен содержать хотя бы один ингредиент.")
         if cooking_time <= 0:
@@ -224,6 +225,11 @@ class RecipePostUpdateSerializer(serializers.ModelSerializer):
                 'Время приготовления должно быть больше 0.')
         if not tags:
             raise ValidationError('Необходимо указать теги.')
+        tags_list = []
+        for tag in tags:
+            if tag in tags_list:
+                raise ValidationError('Теги должны быть уникальными!')
+            tags_list.append(tag)
         return data
 
     def create(self, validated_data):

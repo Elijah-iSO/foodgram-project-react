@@ -1,17 +1,15 @@
-from django.db.models import Sum
-from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from foodgram.settings import FILENAME
-from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                            ShoppingCart, Tag)
+
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet
-from users.models import Follow, User
 
+from recipes.models import (Favorite, Ingredient, Recipe,
+                            ShoppingCart, Tag)
+from users.models import Follow, User
 from .filters import IngredientFilter, RecipeFilter
 from .pagination import LimitPageNumberPaginator
 from .permissions import IsAuthorOrAdminOrReadOnly
@@ -20,6 +18,7 @@ from .serializers import (ChangePasswordSerializer, FavoriteSerializer,
                           RecipePostUpdateSerializer, RecipeReadSerializer,
                           ShoppingCartSerializer, ShortRecipeSerializer,
                           TagSerializer, UserGetSerializer, UserPostSerializer)
+from .utils import collect_shopping_cart
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -55,7 +54,7 @@ class UserViewSet(viewsets.ModelViewSet):
                         status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=['GET'],
-            permission_classes=[IsAuthenticated, ])
+            permission_classes=(IsAuthenticated,))
     def subscriptions(self, request):
         queryset = User.objects.filter(following__user=request.user)
         page = self.paginate_queryset(queryset)
@@ -64,7 +63,7 @@ class UserViewSet(viewsets.ModelViewSet):
         return self.get_paginated_response(serializer.data)
 
     @action(detail=True, methods=['POST', 'DELETE'],
-            permission_classes=[IsAuthenticated, ])
+            permission_classes=(IsAuthenticated,))
     def subscribe(self, request, **kwargs):
         author = get_object_or_404(User, id=kwargs['pk'])
 
@@ -173,13 +172,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return Response(success_response, status=status_code)
 
     @action(detail=True, methods=['POST', 'DELETE'],
-            permission_classes=[IsAuthenticated, ])
+            permission_classes=(IsAuthenticated,))
     def favorite(self, request, **kwargs):
         recipe = self.recipe_get(Recipe, **kwargs)
         return self.create_or_delete_object(request, recipe, Favorite)
 
     @action(detail=True, methods=['POST', 'DELETE'],
-            permission_classes=[IsAuthenticated, ])
+            permission_classes=(IsAuthenticated,))
     def shopping_cart(self, request, **kwargs):
         recipe = self.recipe_get(Recipe, **kwargs)
         return self.create_or_delete_object(request, recipe, ShoppingCart)
@@ -187,23 +186,4 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['GET'],
             permission_classes=(IsAuthenticated,))
     def download_shopping_cart(self, request):
-        shopping_cart_recipes = ShoppingCart.objects.filter(user=request.user)
-        recipe_ids = shopping_cart_recipes.values_list('recipe_id', flat=True)
-
-        ingredient_quantities = RecipeIngredient.objects.filter(
-            recipe__id__in=recipe_ids
-        ).values('ingredient__name', 'ingredient__measurement_unit').annotate(
-            total_amount=Sum('amount')
-        )
-
-        file_content = "\n".join(
-            [f"{item['ingredient__name']} "
-             f"({item['ingredient__measurement_unit']}) "
-             f"— {item['total_amount']}" for item in ingredient_quantities]
-        )
-
-        response = HttpResponse(content_type='text/plain')
-        response['Content-Disposition'] = f'attachment; filename={FILENAME}'
-        response.write(file_content)
-
-        return response
+        return collect_shopping_cart(request)

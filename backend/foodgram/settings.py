@@ -22,13 +22,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'recipes.apps.RecipesConfig',
+    'fg_api.apps.FgApiConfig',
+    'users.apps.UsersConfig',
+
     'rest_framework',
     'rest_framework.authtoken',
     'django_filters',
     'djoser',
-    'recipes.apps.RecipesConfig',
-    'fg_api.apps.FgApiConfig',
-    'users.apps.UsersConfig',
 ]
 
 MIDDLEWARE = [
@@ -125,12 +127,3 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 6,
 }
-
-USERS_MAX_LENGTH = 150
-
-RECIPES_MAX_LENGTH = 200
-
-FORBIDDEN_USERNAMES = ['me', 'set_password', 'subscriptions', 'subscribe',
-                       'shopping_cart', 'favorite']
-
-FILENAME = 'shopping_cart.txt'

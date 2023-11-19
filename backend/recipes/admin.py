@@ -1,22 +1,42 @@
 from django.contrib import admin
+from django.contrib.admin import display
 
 from .models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                      ShoppingCart, Tag)
 
 
-class IngredientAdmin(admin.TabularInline):
-    model = RecipeIngredient
-
-
+@admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    inlines = [
-        IngredientAdmin,
-    ]
-    filter_horizontal = ('ingredients',)
+    list_display = ('name', 'author',)
+    readonly_fields = ('added_in_favorites',)
+    list_filter = ('author', 'name', 'tags',)
+
+    @display(description='Сколько раз добавили в избранное')
+    def added_in_favorites(self, obj):
+        return obj.in_favorited.count()
 
 
-admin.site.register(Tag)
-admin.site.register(Ingredient)
-admin.site.register(Recipe, RecipeAdmin)
-admin.site.register(ShoppingCart)
-admin.site.register(Favorite)
+@admin.register(Ingredient)
+class IngredientAdmin(admin.ModelAdmin):
+    list_display = ('name', 'measurement_unit',)
+    list_filter = ('name',)
+
+
+@admin.register(Tag)
+class TagAdmin(admin.ModelAdmin):
+    list_display = ('name', 'color', 'slug',)
+
+
+@admin.register(ShoppingCart)
+class ShoppingCartAdmin(admin.ModelAdmin):
+    list_display = ('user', 'recipe',)
+
+
+@admin.register(Favorite)
+class FavouriteAdmin(admin.ModelAdmin):
+    list_display = ('user', 'recipe',)
+
+
+@admin.register(RecipeIngredient)
+class RecipeIngredient(admin.ModelAdmin):
+    list_display = ('recipe', 'ingredient', 'amount',)

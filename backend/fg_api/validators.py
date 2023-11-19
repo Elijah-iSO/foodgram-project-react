@@ -1,5 +1,6 @@
-from foodgram.settings import FORBIDDEN_USERNAMES
 from rest_framework import serializers
+
+from users.constants import FORBIDDEN_USERNAMES
 
 
 def is_forbidden_names(username):
@@ -8,6 +9,7 @@ def is_forbidden_names(username):
 
 def validate_new_username(username):
     if is_forbidden_names(username):
-        raise serializers.ValidationError(f'Использовать имя:'
-                                          f'{username} запрещено')
+        raise serializers.ValidationError(
+            f'Использовать имя: {username} запрещено'
+        )
     return username
